@@ -7,7 +7,7 @@ from django.conf import settings
 
 
 class WhatsappBusinessApiIsConfig(AppConfig):
-    default_auto_field = 'django.db._models.BigAutoField'
+    default_auto_field = 'django.db.models.BigAutoField'
     name = 'whatsapp_business_api_is'
     ACTIONS = {}
     VALIDATORS = {}
