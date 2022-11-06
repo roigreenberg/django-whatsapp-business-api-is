@@ -6,7 +6,6 @@ import re
 
 import requests
 from django.conf import settings
-
 from whatsapp_business_api_is.models import OutgoingMessage
 from whatsapp_business_api_is.utils import get_data
 
@@ -115,7 +114,7 @@ def send_template_message(user, wab_bot_message):
         logging.info(f"{'*' * 20}\n*   {message=}\n{'*' * 20}")
         text = wab_bot_message.pk
         if wab_bot_message.quick_reply:
-            text = f"{text}: [{[r for r in wab_bot_message.quick_reply.values()]}]"
+            text = f"{text}: [{[r[1] for r in wab_bot_message.quick_reply]}]"
         message = get_text_message_data(user.number, text)
 
     if message:
@@ -158,7 +157,7 @@ def send_interactive_message(user, wab_bot_message, message_text=None):
     match wab_bot_message.type:  # there are other type that not implemented yet
         case 'quick_reply':
             parts['type'] = 'button'
-            buttons = wab_bot_message.quick_reply.items()
+            buttons = wab_bot_message.quick_reply
             parts['action'] = {
                 "buttons": [create_button(id, name) for id, name in buttons]
             }
