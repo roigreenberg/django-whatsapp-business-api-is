@@ -4,6 +4,7 @@ import urllib.parse
 from django.core.management.base import BaseCommand
 
 REGISTER_URL = 'https://waba.360dialog.io/v1/configs/webhook'
+SANDBOX_REGISTER_URL = 'https://waba-sandbox.360dialog.io/v1/configs/webhook'
 
 
 class Command(BaseCommand):
@@ -14,6 +15,11 @@ class Command(BaseCommand):
         parser.add_argument(
             '--server_url',
             help='Server url',
+        )
+        parser.add_argument(
+            '--sandbox',
+            action='store_true',
+            help="Use 360dialog sandbox"
         )
 
     def handle(self, *args, **options):
@@ -34,6 +40,7 @@ class Command(BaseCommand):
         print(f"{payload=}")
         print(f"{headers=}")
 
-        response = requests.request("POST", REGISTER_URL, headers=headers, data=payload)
+        register_url = REGISTER_URL if not options['sandbox'] else SANDBOX_REGISTER_URL
+        response = requests.request("POST", register_url, headers=headers, data=payload)
 
         print(response.text)

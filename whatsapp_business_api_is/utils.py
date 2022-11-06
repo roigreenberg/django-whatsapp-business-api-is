@@ -6,7 +6,6 @@ from dateutil.parser import parse
 from django.apps import apps
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-
 from whatsapp_business_api_is.apps import WhatsappBusinessApiIsConfig
 from whatsapp_business_api_is.models import TYPE_USER_START, IncomingMessage, WaUser
 
@@ -133,7 +132,7 @@ def _get_object(user, data):
 
 
 def run_action(user, action, data, msg, wab_bot_message):
-    if action_func := WhatsappBusinessApiIsConfig.ACTIONS.get(action, None):
+    if action_func := WhatsappBusinessApiIsConfig.FUNCTIONS.get(action, None):
         res = action_func(user, msg, wab_bot_message, data)
         user.refresh_from_db()
         return res

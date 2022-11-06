@@ -1,7 +1,7 @@
 from whatsapp_business_api_is.utils import set_data
 
 
-class Actions:
+class Functions:
 
     @staticmethod
     def do_nothing(*args, **kwargs):
