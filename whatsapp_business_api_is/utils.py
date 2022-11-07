@@ -180,3 +180,7 @@ def set_data(user, data, msg):
         logging.info(f"About to save data: {obj=} {data['field']=} {value=}")
         setattr(obj, data['field'], value)
         obj.save(update_fields=[data['field']])
+
+
+def get_quick_replies_as_flat_list(quick_reply):
+    return [list(reply.items())[0] for reply in quick_reply]

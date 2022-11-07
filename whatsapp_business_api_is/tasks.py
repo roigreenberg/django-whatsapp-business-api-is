@@ -3,7 +3,6 @@ import logging
 from celery import shared_task
 from django.conf import settings
 from django.core.exceptions import ValidationError
-
 from whatsapp_business_api_is.messages import send_error_message, \
     send_unknown_message, \
     send_text_message, \
@@ -16,7 +15,8 @@ from whatsapp_business_api_is.utils import get_start_message, \
     validate_value, \
     run_actions, \
     run_action, \
-    get_data
+    get_data, \
+    get_quick_replies_as_flat_list
 
 
 def set_state(user, state):
@@ -134,10 +134,10 @@ def parse_incoming_message(raw_msg):
                     elif msg_type == 'text':
                         button_text = msg.text
 
-                    quick_replies = current_state.quick_reply
-                    try:
-                        button_key = list(quick_replies.keys())[list(quick_replies.values()).index(button_text)]
-                    except ValueError:
+                    for button_key, button_pattern in get_quick_replies_as_flat_list(current_state.quick_reply):
+                        if button_pattern == button_text:
+                            break
+                    else:
                         send_unknown_message(user)
                         return
 
