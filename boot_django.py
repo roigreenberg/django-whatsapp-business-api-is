@@ -14,7 +14,6 @@ def boot_django():
     REDIS_URL=os.environ.get("REDIS_URL", "redis://redis:6379")
     settings.configure(
         BASE_DIR=BASE_DIR,
-        DEBUG=True,
         DATABASES={
             "default": {
                 "ENGINE": "django.db.backends.sqlite3",
@@ -24,8 +23,11 @@ def boot_django():
         REDIS_URL=REDIS_URL,
         CELERY_BROKER_URL=REDIS_URL,
         CELERY_RESULT_BACKEND=REDIS_URL,
-        D360_BASE_URL=os.environ.get("D360_BASE_URL", "https://waba-sandbox.360dialog.io/v1/"),
-        D360_API_KEY=os.environ.get("D360_API_KEY", ""),
+        WAB_IS={
+            "D360_BASE_URL": os.environ.get("D360_BASE_URL", "https://waba-sandbox.360dialog.io/v1/"),
+            "D360_API_KEY": os.environ.get("D360_API_KEY", ""),
+            "DEBUG": True,
+        },
         INSTALLED_APPS=(
             "whatsapp_business_api_is",
         ),

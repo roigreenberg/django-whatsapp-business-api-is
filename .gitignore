@@ -3,3 +3,6 @@
 __pycache__
 db.sqlite3
 /.pypirc
+/venv/
+/dist/
+/django_whatsapp_business_api_is.egg-info/

@@ -4,9 +4,10 @@ from datetime import timedelta, time
 
 from dateutil.parser import parse
 from django.apps import apps
-from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+
 from whatsapp_business_api_is.apps import WhatsappBusinessApiIsConfig
+from whatsapp_business_api_is.conf import Conf
 from whatsapp_business_api_is.models import TYPE_USER_START, IncomingMessage, WaUser
 
 UUID_PATTERN = re.compile('id:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
@@ -77,7 +78,7 @@ def format_number(number):
     number = re.sub('\D', '', number)
 
     if number.startswith('0'):
-        number = settings.DEFAULT_NUMBER_PREFIX + number[1:]
+        number = Conf.DEFAULT_NUMBER_PREFIX + number[1:]
     return number
 
 

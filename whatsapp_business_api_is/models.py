@@ -1,6 +1,7 @@
-from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save
+
+from whatsapp_business_api_is.conf import Conf
 
 # Create your models here.
 TYPE_USER_START = 'user_start'
@@ -74,7 +75,7 @@ class WaUser(models.Model):
 def outgoing_message_post_save(sender, instance, *args, **kwargs):
     message = instance
     if message.template_name and '%%env%%' in message.template_name:
-        message.template_name = message.template_name.replace('%%env%%', settings.ENV)
+        message.template_name = message.template_name.replace('%%env%%', Conf.ENV)
         message.save()
         return
 

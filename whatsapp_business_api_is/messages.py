@@ -5,17 +5,16 @@ import os
 import re
 
 import requests
-from django.conf import settings
+
+from whatsapp_business_api_is.conf import Conf
 from whatsapp_business_api_is.models import OutgoingMessage
 from whatsapp_business_api_is.utils import get_data, get_quick_replies_as_flat_list
 
-MESSAGES_URL = settings.D360_BASE_URL + 'messages'
-MEDIA_URL = settings.D360_BASE_URL + 'media'
-AUTH_HEADER = {
-    'D360-API-KEY': settings.D360_API_KEY,
-}
+MESSAGES_URL = Conf.D360_BASE_URL + 'messages'
+MEDIA_URL = Conf.D360_BASE_URL + 'media'
+
 HEADERS = {
-    **AUTH_HEADER,
+    **Conf.AUTH_HEADER,
     'Content-Type': "application/json",
 }
 
@@ -25,7 +24,7 @@ COMPONENT_NAME_PATTERN = re.compile('(?P<type>\w+)(%(?P<index>\d))?')
 def get_template_message_data(to_number, template_name, components, lang_code=None):
     language_code = lang_code or os.environ.get('TEMPLATE_LANG_CODE', 'he')
     message = {
-        "to": to_number,
+        Conf.TO_FIELD_NAME: to_number,
         "type": "template",
         "template": {
             "language": {
@@ -41,10 +40,10 @@ def get_template_message_data(to_number, template_name, components, lang_code=No
     return message
 
 
-def get_media_message_data(to, media_data):
+def get_media_message_data(to_number, media_data):
     message = {
         "recipient_type": "individual",
-        "to": to,
+        Conf.TO_FIELD_NAME: to_number,
         "type": media_data['media_type'],
 
         media_data['media_type']: media_data['payload']
@@ -55,7 +54,7 @@ def get_media_message_data(to, media_data):
 
 def get_text_message_data(to_number, text):
     message = {
-        "to": to_number,
+        Conf.TO_FIELD_NAME: to_number,
         "type": "text",
         "text": {
             "body": text
@@ -68,7 +67,7 @@ def get_text_message_data(to_number, text):
 def get_interactive_message_data(parts, to_number):
     message = {
         "recipient_type": "individual",
-        "to": to_number,
+        Conf.TO_FIELD_NAME: to_number,
         "type": "interactive",
         "interactive": parts
     }
@@ -110,7 +109,7 @@ def send_template_message(user, wab_bot_message):
     logging.debug(f"{components=}")
     message = get_template_message_data(user.number, wab_bot_message.template_name, components)
 
-    if settings.DEMO_MODE:
+    if Conf.DEMO_MODE:
         logging.info(f"{'*' * 20}\n*   {message=}\n{'*' * 20}")
         text = wab_bot_message.pk
         if wab_bot_message.quick_reply:
@@ -202,7 +201,7 @@ def send_error_message(user, error):
 def get_media(media_id):
     res = requests.get(
         url=MEDIA_URL + '/' + media_id,
-        headers=AUTH_HEADER
+        headers=Conf.AUTH_HEADER
     )
     logging.info(res.__dict__)
     return res

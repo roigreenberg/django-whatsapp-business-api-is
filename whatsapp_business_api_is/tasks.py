@@ -1,8 +1,9 @@
 import logging
 
 from celery import shared_task
-from django.conf import settings
 from django.core.exceptions import ValidationError
+
+from whatsapp_business_api_is.apps import WhatsappBusinessApiIsConfig
 from whatsapp_business_api_is.messages import send_error_message, \
     send_unknown_message, \
     send_text_message, \
@@ -23,7 +24,7 @@ def set_state(user, state):
     user.state = state
     user.save(update_fields=['state'])
 
-    settings.SET_STATE(user)
+    WhatsappBusinessApiIsConfig.set_state(user)
 
     logging.info(f"Set {state=} to {user=}")
 
