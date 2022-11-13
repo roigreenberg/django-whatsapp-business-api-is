@@ -132,7 +132,7 @@ def _get_object(user, data):
     return obj
 
 
-def run_action(user, action, data, msg, wab_bot_message):
+def run_action(action, user, msg, wab_bot_message, data):
     if action_func := WhatsappBusinessApiIsConfig.FUNCTIONS.get(action, None):
         res = action_func(user, msg, wab_bot_message, data)
         user.refresh_from_db()
@@ -152,7 +152,7 @@ def run_actions(user, msg, wab_bot_message):
 
     for action, data in actions.items():
         logging.info(f'About to run action: {action}')
-        run_action(user, action, data, msg, wab_bot_message)
+        run_action(action, user, msg, wab_bot_message, data)
 
 
 def get_data(user, data):
@@ -160,7 +160,7 @@ def get_data(user, data):
     if 'model' in data:
         obj = _get_object(user, data)
     if 'action' in data:
-        obj = run_action(user, data.get('action'), data, None, None)
+        obj = run_action(data.get('action'), user, None, None, data)
     res = getattr(obj, data['field'], None) if 'field' in data else obj
 
     logging.info(f"{res=}")
@@ -173,7 +173,7 @@ def set_data(user, data, msg):
     if 'model' in data:
         obj = _get_object(user, data)
     if 'action' in data:
-        obj = run_action(user, data.get('action'), data, msg, None)
+        obj = run_action(data.get('action'), user, msg, None, data)
 
     if 'field' in data:
         value = data.get('value', msg.validated_value)

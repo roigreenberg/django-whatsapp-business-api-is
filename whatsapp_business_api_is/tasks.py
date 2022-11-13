@@ -191,7 +191,7 @@ def send_next_message(user, msg, incoming_message, reply_message):
     message_text = None
     if reply_message.text is None and reply_message.template_name is None and reply_message.type != TYPE_MEDIA:
         logging.info("About to send method message")
-        if not (message_text := run_action(user, f"{reply_message.key}__message", None, None, reply_message)):
+        if not (message_text := run_action(f"{reply_message.key}__message", user, None, reply_message, None)):
             logging.info("Got no text to send")
             return
 

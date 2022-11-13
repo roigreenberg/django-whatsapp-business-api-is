@@ -92,19 +92,25 @@ def send_message(message):
                         data=json.dumps(message),
                         headers=HEADERS)
 
-    logging.debug(f"{res=} {res.text=} {res.json()=}")
+    logging.debug(f"{res=}")
+    logging.debug(f"{res.text=}")
+    try:
+        logging.debug(f"{res.json()=}")
+    except Exception:
+        pass
     if res.status_code != 201:
         logging.error(f"Something went wrong")
         raise Exception(res.json())
 
 
-def send_template_message(user, wab_bot_message):
-    components = copy.deepcopy(wab_bot_message.message_variables)  # we can do this because this is a parsed JSON field
+def send_template_message(user, wab_bot_message, components=None):
+    components = components or copy.deepcopy(
+        wab_bot_message.message_variables)  # we can do this because this is a parsed JSON field
     if components:
         for component in components:
             for parameter in component['parameters']:
-                variable = parameter.pop('variable')
-                parameter[parameter['type']] = str(get_data(user, variable))
+                if variable := parameter.pop('variable'):
+                    parameter[parameter['type']] = str(get_data(user, variable))
 
     logging.debug(f"{components=}")
     message = get_template_message_data(user.number, wab_bot_message.template_name, components)
@@ -187,7 +193,8 @@ def send_unknown_message(user):
 
 
 def send_error_message(user, error):
-    if error and hasattr(error, 'params') and error.params and error.params.get('custom_message', False):
+    if error and error.message and hasattr(error, 'params') and \
+            error.params and error.params.get('custom_message', False):
         if message := OutgoingMessage.objects.filter(key=error.message).first():
             send_text_message(user, message)
         else:

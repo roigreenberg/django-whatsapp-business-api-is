@@ -6,3 +6,4 @@ db.sqlite3
 /venv/
 /dist/
 /django_whatsapp_business_api_is.egg-info/
+/.venv/

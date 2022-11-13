@@ -22,6 +22,7 @@ class Conf:
     D360_API_KEY = conf.get("d360_api_key", "")
 
     AUTH_HEADER = conf.get("auth_header", {'D360-API-KEY': D360_API_KEY, })
+
     TO_FIELD_NAME = conf.get("to_field_name", "to")
 
     INCOMING_PARSER = conf.get("incoming_parser", "whatsapp_business_api_is.tasks.parse_incoming_message")

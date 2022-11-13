@@ -14,7 +14,7 @@ class BaseMsg:
 class TextMsg(BaseMsg):
     def __init__(self, msg):
         super().__init__(msg)
-        self.text = msg['text']['body'].strip()
+        self.text = msg['text']['body'].strip().replace(u'\xa0', u' ')  # sometimes a space represent by \xa0
 
 
 class InteractiveMsg(BaseMsg):
