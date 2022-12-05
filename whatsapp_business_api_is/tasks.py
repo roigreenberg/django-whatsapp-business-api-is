@@ -113,6 +113,9 @@ def parse_incoming_message(raw_msg):
     elif msg_type == 'text' and msg.text == '*':
         reply_message = get_next_message(user, None, user.state)
         ignore_validation = True
+    elif (msg_type == 'button' and msg.button_payload == "wab_is_do_nothing") or \
+            (msg_type == "interactive" and msg.button_reply_id == "wab_is_do_nothing"):
+        return
     else:
         current_state = user.state
         logging.info(f"{current_state=}")

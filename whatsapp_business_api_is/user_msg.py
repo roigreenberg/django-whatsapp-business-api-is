@@ -27,6 +27,7 @@ class ButtonMsg(BaseMsg):
     def __init__(self, msg):
         super().__init__(msg)
         self.button_text = msg['button']['text']
+        self.button_payload = msg['button'].get('payload', None)
 
 
 class ContactsMsg(BaseMsg):

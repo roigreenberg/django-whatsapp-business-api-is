@@ -10,8 +10,8 @@ from whatsapp_business_api_is.conf import Conf
 from whatsapp_business_api_is.models import OutgoingMessage
 from whatsapp_business_api_is.utils import get_data, get_quick_replies_as_flat_list
 
-MESSAGES_URL = Conf.D360_BASE_URL + 'messages'
-MEDIA_URL = Conf.D360_BASE_URL + 'media'
+MESSAGES_URL = Conf.D360_BASE_URL + 'messages/'
+MEDIA_URL = Conf.D360_BASE_URL + 'media/'
 
 HEADERS = {
     **Conf.AUTH_HEADER,
@@ -109,7 +109,7 @@ def send_template_message(user, wab_bot_message, components=None):
     if components:
         for component in components:
             for parameter in component['parameters']:
-                if variable := parameter.pop('variable'):
+                if variable := parameter.pop('variable', None):
                     parameter[parameter['type']] = str(get_data(user, variable))
 
     logging.debug(f"{components=}")
