@@ -105,6 +105,9 @@ def parse_incoming_message(raw_msg):
 
     user, _ = WaUser.objects.get_or_create(number=msg.number)
 
+    if user.disable_bot:
+        logging.debug(f'Bot is disabled for {user}')
+        return
     if msg_type == 'text' and (incoming_message := get_start_message(msg.text)):
 
         logging.info(f"Start message")

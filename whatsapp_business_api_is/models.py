@@ -67,6 +67,8 @@ class WaUser(models.Model):
     email = models.EmailField(null=True)
     state = models.ForeignKey(OutgoingMessage, on_delete=models.CASCADE, default=OutgoingMessage.DEFAULT_STATE)
     opt_in = models.BooleanField(default=False)
+    failure_count = models.IntegerField(default=0)
+    disable_bot = models.BooleanField(default=False)
 
     def __unicode__(self):
         return u'{}'.format(self.number)

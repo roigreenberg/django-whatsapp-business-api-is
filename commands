@@ -1,0 +1,7 @@
+# package
+
+# From WINDOWS POWERSHELL
+
+cd .\django-whatsapp-business-api-is\
+.\venv\Scripts\python.exe -m build
+.\venv\Scripts\python.exe  -m twine upload --repository pypi dist/*

@@ -86,7 +86,12 @@ def create_button(id_, title):
     return button
 
 
-def send_message(message):
+def send_message(user, message, is_failure=False):
+    if not is_failure:
+        user.failure_count = 0
+    else:
+        user.failure_count += 1
+
     logging.debug(f"response: {MESSAGES_URL} \nresponse: {message=} {HEADERS=}")
     res = requests.post(url=MESSAGES_URL,
                         data=json.dumps(message),
@@ -124,7 +129,7 @@ def send_template_message(user, wab_bot_message, components=None):
         message = get_text_message_data(user.number, text)
 
     if message:
-        send_message(message)
+        send_message(user, message)
 
 
 def send_media_message(user, wab_bot_message, message_text=None):
@@ -146,7 +151,7 @@ def send_media_message(user, wab_bot_message, message_text=None):
     message = get_media_message_data(user.number, media_data)
 
     assert message
-    send_message(message)
+    send_message(user, message)
 
 
 def send_interactive_message(user, wab_bot_message, message_text=None):
@@ -171,10 +176,10 @@ def send_interactive_message(user, wab_bot_message, message_text=None):
     message = get_interactive_message_data(parts, user.number)
 
     assert message
-    send_message(message)
+    send_message(user, message)
 
 
-def send_text_message(user, wab_bot_message, message_text=None):
+def send_text_message(user, wab_bot_message, message_text=None, is_failure=False):
     message_text = message_text or wab_bot_message.text
     if wab_bot_message.message_variables:
         variables = {k: get_data(user, v) for k, v in
@@ -184,25 +189,36 @@ def send_text_message(user, wab_bot_message, message_text=None):
     message = get_text_message_data(user.number, message_text)
 
     assert message
-    send_message(message)
+    send_message(user, message, is_failure)
+
+
+def send_get_help_message(user):
+    logging.info(f'send get_help_message to {user}')
+    get_help_message = OutgoingMessage.objects.get(key='get_help')
+    send_text_message(user, get_help_message, None, True)
 
 
 def send_unknown_message(user):
+    if user.failure_count >= 3:
+        send_get_help_message(user)
+        return
     unknown_message = OutgoingMessage.objects.get(key='unknown')
-    send_text_message(user, unknown_message)
+    send_text_message(user, unknown_message, None, True)
 
 
 def send_error_message(user, error):
-    if error and error.message and hasattr(error, 'params') and \
+    if user.failure_count >= 3:
+        send_get_help_message(user)
+    elif error and error.message and hasattr(error, 'params') and \
             error.params and error.params.get('custom_message', False):
         if message := OutgoingMessage.objects.filter(key=error.message).first():
-            send_text_message(user, message)
+            send_text_message(user, message, None, True)
         else:
             message = get_text_message_data(user.number, error.message)
-            send_message(message)
+            send_message(user, message, True)
     else:
         unknown_message = OutgoingMessage.objects.get(key='wrong_format')
-        send_text_message(user, unknown_message)
+        send_text_message(user, unknown_message, None, True)
 
 
 def get_media(media_id):
