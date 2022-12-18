@@ -91,6 +91,7 @@ def send_message(user, message, is_failure=False):
         user.failure_count = 0
     else:
         user.failure_count += 1
+    user.save()
 
     logging.debug(f"response: {MESSAGES_URL} \nresponse: {message=} {HEADERS=}")
     res = requests.post(url=MESSAGES_URL,
