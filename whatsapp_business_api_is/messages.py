@@ -104,8 +104,8 @@ def send_message(user, message, is_failure=False):
         logging.debug(f"{res.json()=}")
     except Exception:
         pass
-    if res.status_code != 201:
-        logging.error(f"Something went wrong")
+    if not 200 <= res.status_code < 300:
+        logging.error(f"API error trying to send message {json.dumps(message)}")
         raise Exception(res.json())
 
 
