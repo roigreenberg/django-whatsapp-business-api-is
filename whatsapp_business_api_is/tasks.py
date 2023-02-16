@@ -3,82 +3,14 @@ import logging
 from celery import shared_task
 from django.core.exceptions import ValidationError
 
-from whatsapp_business_api_is.apps import WhatsappBusinessApiIsConfig
 from whatsapp_business_api_is.messages import send_error_message, \
-    send_unknown_message, \
-    send_text_message, \
-    send_template_message, \
-    send_media_message, \
-    send_interactive_message
-from whatsapp_business_api_is.models import TYPE_QUICK_REPLY, TYPE_MEDIA, WaUser, OutgoingMessage
+    send_unknown_message, get_next_message, send_next_message
+from whatsapp_business_api_is.models import WaUser, OutgoingMessage
 from whatsapp_business_api_is.user_msg import msg_factory
 from whatsapp_business_api_is.utils import get_start_message, \
     validate_value, \
     run_actions, \
-    run_action, \
-    get_data, \
     get_quick_replies_as_flat_list
-
-
-def set_state(user, state):
-    user.state = state
-    user.save(update_fields=['state'])
-
-    WhatsappBusinessApiIsConfig.set_state(user)
-
-    logging.info(f"Set {state=} to {user=}")
-
-
-def is_data_exist(user, message):
-    try:
-        if message.skip_if_exists:
-            logging.debug(f"use skip_if_exists")
-            data = message.skip_if_exists
-        else:
-            if not message.responses.exists():
-                return False
-            data = message.responses.first().actions.get('save_data')
-            if not data or data.get('do_not_skip', False):
-                logging.debug(f"Do not skip - {'No save_data' if not data else 'do_not_skip'}")
-                return False
-        logging.info(f'{data=}')
-        value = get_data(user, data)
-        logging.info(f"Found {value=}")
-        if value is None:
-            return False
-        if 'ManyRelatedManager' in str(type(value)):
-            logging.debug(f"{value.exists()=}")
-            return value.exists()
-
-        if 'value' in data:
-            logging.debug(f"{value} == {data['value']}")
-            return value == data['value']
-
-        return value
-    except Exception as e:
-        logging.debug(f"Not found {e=}")
-        return False
-
-
-def should_force_next(incoming_message):
-    if not incoming_message:
-        return False
-    logging.debug(f"{incoming_message.force_next=}")
-    return incoming_message.force_next
-
-
-# @next_message - override the reply, for cases like concat message
-def get_next_message(user, incoming_message, next_message=None):
-    next_message = next_message or incoming_message.reply
-    logging.info(f'candidate next message: {next_message}')
-    while not should_force_next(incoming_message) and is_data_exist(user, next_message):
-        if next_message.skip_if_exists:
-            next_message = OutgoingMessage.objects.get(pk=next_message.skip_if_exists['next_message'])
-        else:
-            next_message = next_message.responses.order_by('-is_default').first().reply
-        logging.debug(f'skip to next message: {next_message}')
-    logging.info(f'next message: {next_message}')
-    return next_message
 
 
 @shared_task
@@ -168,6 +100,7 @@ def parse_incoming_message(raw_msg):
         if not incoming_message:
             logging.info(f"No message found")
             send_unknown_message(user)
+            return
 
     try:
         if not ignore_validation:
@@ -182,39 +115,3 @@ def parse_incoming_message(raw_msg):
         reply_message = get_next_message(user, incoming_message)
 
     send_next_message(user, msg, incoming_message, reply_message)
-
-
-def send_next_message(user, msg, incoming_message, reply_message):
-    if not reply_message:
-        logging.error('no reply_message')
-        return
-    if reply_message.key == 'empty':
-        logging.info(f"Nothing to send")
-        return
-
-    run_actions(user, msg, reply_message)
-    user.refresh_from_db()
-    message_text = None
-    if reply_message.text is None and reply_message.template_name is None and reply_message.type != TYPE_MEDIA:
-        logging.info("About to send method message")
-        if not (message_text := run_action(f"{reply_message.key}__message", user, None, reply_message, None)):
-            logging.info("Got no text to send")
-            return
-
-    if reply_message.template_name:
-        send_template_message(user, reply_message)
-    elif reply_message.type == TYPE_MEDIA:
-        send_media_message(user, reply_message, message_text)
-    elif reply_message.type in [TYPE_QUICK_REPLY]:
-        send_interactive_message(user, reply_message, message_text)
-    else:
-        send_text_message(user, reply_message, message_text)
-
-    set_state(user, reply_message)
-    user.refresh_from_db()
-    logging.info(f"Sent {reply_message.key}")
-
-    if reply_message.next_message:
-        logging.info(f"About to sent next message")
-        next_message = get_next_message(user, incoming_message, reply_message.next_message)
-        send_next_message(user, msg, incoming_message, next_message)

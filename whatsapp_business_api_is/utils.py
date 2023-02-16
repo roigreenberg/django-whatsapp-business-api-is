@@ -185,3 +185,50 @@ def set_data(user, data, msg):
 
 def get_quick_replies_as_flat_list(quick_reply):
     return [list(reply.items())[0] for reply in quick_reply]
+
+
+def set_state(user, state):
+    user.state = state
+    user.save(update_fields=['state'])
+
+    WhatsappBusinessApiIsConfig.set_state(user)
+
+    logging.info(f"Set {state=} to {user=}")
+
+
+def is_data_exist(user, message):
+    try:
+        if message.skip_if_exists:
+            logging.debug(f"use skip_if_exists")
+            data = message.skip_if_exists
+        else:
+            if not message.responses.exists():
+                return False
+            data = message.responses.first().actions.get('save_data')
+            if not data or data.get('do_not_skip', False):
+                logging.debug(f"Do not skip - {'No save_data' if not data else 'do_not_skip'}")
+                return False
+        logging.info(f'{data=}')
+        value = get_data(user, data)
+        logging.info(f"Found {value=}")
+        if value is None:
+            return False
+        if 'ManyRelatedManager' in str(type(value)):
+            logging.debug(f"{value.exists()=}")
+            return value.exists()
+
+        if 'value' in data:
+            logging.debug(f"{value} == {data['value']}")
+            return value == data['value']
+
+        return value
+    except Exception as e:
+        logging.debug(f"Not found {e=}")
+        return False
+
+
+def should_force_next(incoming_message):
+    if not incoming_message:
+        return False
+    logging.debug(f"{incoming_message.force_next=}")
+    return incoming_message.force_next

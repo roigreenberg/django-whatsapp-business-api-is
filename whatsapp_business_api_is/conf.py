@@ -32,3 +32,5 @@ class Conf:
     DEFAULT_NUMBER_PREFIX = conf.get("default_number_prefix", "972")
 
     TEMPLATE_LANG_CODE = conf.get("template_lang_code", "he")
+
+    RESEND_ON_WRONG = conf.get("resend_on_wrong", 0)

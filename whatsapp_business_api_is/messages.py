@@ -7,8 +7,9 @@ import re
 import requests
 
 from whatsapp_business_api_is.conf import Conf
-from whatsapp_business_api_is.models import OutgoingMessage
-from whatsapp_business_api_is.utils import get_data, get_quick_replies_as_flat_list
+from whatsapp_business_api_is.models import OutgoingMessage, TYPE_MEDIA, TYPE_QUICK_REPLY
+from whatsapp_business_api_is.utils import get_data, get_quick_replies_as_flat_list, run_actions, run_action, set_state, \
+    is_data_exist, should_force_next
 
 MESSAGES_URL = Conf.D360_BASE_URL + 'messages/'
 MEDIA_URL = Conf.D360_BASE_URL + 'media/'
@@ -206,6 +207,11 @@ def send_unknown_message(user):
     unknown_message = OutgoingMessage.objects.get(key='unknown')
     send_text_message(user, unknown_message, None, True)
 
+    user.refresh_from_db()
+    if user.state != 'initial' and user.failure_count == Conf.RESEND_ON_WRONG:
+        reply_message = get_next_message(user, None, user.state)
+        send_next_message(user, None, None, reply_message)
+
 
 def send_error_message(user, error):
     if user.failure_count >= 3:
@@ -230,3 +236,56 @@ def get_media(media_id):
     logging.info(res.__dict__)
     return res
 
+
+# @next_message - override the reply, for cases like concat message
+def get_next_message(user, incoming_message, next_message=None):
+    next_message = next_message
+    if not next_message and incoming_message:
+        next_message = incoming_message.reply
+    if not next_message:
+        logging.error("get_next_message should get either incoming_message or next_message")
+    logging.info(f'candidate next message: {next_message}')
+    while not should_force_next(incoming_message) and is_data_exist(user, next_message):
+        if next_message.skip_if_exists:
+            next_message = OutgoingMessage.objects.get(pk=next_message.skip_if_exists['next_message'])
+        else:
+            next_message = next_message.responses.order_by('-is_default').first().reply
+        logging.debug(f'skip to next message: {next_message}')
+    logging.info(f'next message: {next_message}')
+    return next_message
+
+
+def send_next_message(user, msg, incoming_message, reply_message):
+    if not reply_message:
+        logging.error('no reply_message')
+        return
+    if reply_message.key == 'empty':
+        logging.info(f"Nothing to send")
+        return
+
+    run_actions(user, msg, reply_message)
+    user.refresh_from_db()
+    message_text = None
+    if reply_message.text is None and reply_message.template_name is None and reply_message.type != TYPE_MEDIA:
+        logging.info("About to send method message")
+        if not (message_text := run_action(f"{reply_message.key}__message", user, None, reply_message, None)):
+            logging.info("Got no text to send")
+            return
+
+    if reply_message.template_name:
+        send_template_message(user, reply_message)
+    elif reply_message.type == TYPE_MEDIA:
+        send_media_message(user, reply_message, message_text)
+    elif reply_message.type in [TYPE_QUICK_REPLY]:
+        send_interactive_message(user, reply_message, message_text)
+    else:
+        send_text_message(user, reply_message, message_text)
+
+    set_state(user, reply_message)
+    user.refresh_from_db()
+    logging.info(f"Sent {reply_message.key}")
+
+    if reply_message.next_message:
+        logging.info(f"About to sent next message")
+        next_message = get_next_message(user, incoming_message, reply_message.next_message)
+        send_next_message(user, msg, incoming_message, next_message)
