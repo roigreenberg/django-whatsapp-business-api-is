@@ -56,6 +56,9 @@ def parse_incoming_message(raw_msg):
         logging.info(f"{current_state=}")
         logging.debug(f"{current_state.responses.all()=} {current_state.responses.exists()=}")
         if user.state == 'initial' or not current_state.responses.exists():
+            if initial_welcome_message := OutgoingMessage.objects.filter(key='initial_welcome_message').first():
+                logging.info(f"Unknown message from new user")
+                send_next_message(user, None, None, initial_welcome_message)
             send_unknown_message(user)
             return
 
