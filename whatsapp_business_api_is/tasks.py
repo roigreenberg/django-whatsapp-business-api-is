@@ -45,6 +45,13 @@ def parse_incoming_message(raw_msg):
         logging.info(f"Start message")
 
         reply_message = incoming_message.reply
+    elif user.state == 'initial':
+        if initial_welcome_message := OutgoingMessage.objects.filter(key='initial_welcome_message').first():
+            logging.info(f"Unknown message from new user")
+            send_next_message(user, None, None, initial_welcome_message)
+        else:
+            send_unknown_message(user)
+        return
     elif msg_type == 'text' and msg.text == '*':
         reply_message = get_next_message(user, None, user.state)
         ignore_validation = True
@@ -55,10 +62,10 @@ def parse_incoming_message(raw_msg):
         current_state = user.state
         logging.info(f"{current_state=}")
         logging.debug(f"{current_state.responses.all()=} {current_state.responses.exists()=}")
-        if user.state == 'initial' or not current_state.responses.exists():
-            if initial_welcome_message := OutgoingMessage.objects.filter(key='initial_welcome_message').first():
-                logging.info(f"Unknown message from new user")
-                send_next_message(user, None, None, initial_welcome_message)
+        if not current_state.responses.exists():
+            if no_waiting_response_message := OutgoingMessage.objects.filter(key='no_waiting_response_message').first():
+                logging.info(f"No waiting response")
+                send_next_message(user, None, None, no_waiting_response_message)
             send_unknown_message(user)
             return
 
