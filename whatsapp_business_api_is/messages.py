@@ -208,7 +208,7 @@ def send_unknown_message(user):
     send_text_message(user, unknown_message, None, True)
 
     user.refresh_from_db()
-    if user.state != 'initial' and user.failure_count == Conf.RESEND_ON_WRONG:
+    if user.state.pk != 'initial' and user.failure_count == Conf.RESEND_ON_WRONG:
         reply_message = get_next_message(user, None, user.state)
         send_next_message(user, None, None, reply_message)
 

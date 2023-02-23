@@ -45,7 +45,7 @@ def parse_incoming_message(raw_msg):
         logging.info(f"Start message")
 
         reply_message = incoming_message.reply
-    elif user.state == 'initial':
+    elif user.state.pk == 'initial':
         if initial_welcome_message := OutgoingMessage.objects.filter(key='initial_welcome_message').first():
             logging.info(f"Unknown message from new user")
             send_next_message(user, None, None, initial_welcome_message)
