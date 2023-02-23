@@ -66,7 +66,8 @@ def parse_incoming_message(raw_msg):
             if no_waiting_response_message := OutgoingMessage.objects.filter(key='no_waiting_response_message').first():
                 logging.info(f"No waiting response")
                 send_next_message(user, None, None, no_waiting_response_message)
-            send_unknown_message(user)
+            else:
+                send_unknown_message(user)
             return
 
         button_key = ''
