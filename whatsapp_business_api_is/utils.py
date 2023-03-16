@@ -176,7 +176,8 @@ def set_data(user, data, msg):
         obj = run_action(data.get('action'), user, msg, None, data)
 
     if 'field' in data:
-        value = data.get('value', msg.validated_value)
+        # we want an exception to be thrown if msg is None and data['value'] doesn't exist
+        value = data.get('value', msg.validated_value) if msg else data['value']
 
         logging.info(f"About to save data: {obj=} {data['field']=} {value=}")
         setattr(obj, data['field'], value)
