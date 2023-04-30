@@ -12,8 +12,6 @@ class Functions:
         try:
             set_data(user, data, msg)
         except Exception as e:
-            import traceback
-            traceback.print_exc()
             print(f" Failed to save data: {e}")
 
     @staticmethod
